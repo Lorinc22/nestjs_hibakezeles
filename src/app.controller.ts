@@ -19,7 +19,7 @@ export class AppController {
   }
   @Post('/register')
   @HttpCode(200)
-  register(@Body() registerDto: RegisterDto){
+  async register(@Body() registerDto: RegisterDto){
     if(!registerDto.email||
       !registerDto.password || !registerDto.passwordAgain)
     if(!registerDto.email.includes('@')){
@@ -35,8 +35,8 @@ export class AppController {
    const userRepo = this.dataSource.getRepository(User);
    const user = new User();
    user.email = registerDto.email;
-   user.password = bcrypt.hash(registerDto.password, 15 );
-   userRepo.save(user)
+   user.password = await bcrypt.hash(registerDto.password, 15 );
+   await userRepo.save(user);
 
     return user;
   }
