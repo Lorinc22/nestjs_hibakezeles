@@ -1,9 +1,10 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, Post, Render } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, Param, Patch, Post, Render } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { AppService } from './app.service';
 import RegisterDto from './register.dto';
 import User from './user.entity';
 import * as bcrypt from 'bcrypt'
+import ChangeDto from './change.dto';
 
 @Controller()
 export class AppController {
@@ -21,7 +22,7 @@ export class AppController {
   @HttpCode(200)
   async register(@Body() registerDto: RegisterDto){
     if(!registerDto.email||
-      !registerDto.password || !registerDto.passwordAgain)
+      !registerDto.password || !registerDto.passwordAgain )
     if(!registerDto.email.includes('@')){
       throw new BadRequestException('Email must contain a @ character');
     }
@@ -32,6 +33,8 @@ export class AppController {
       throw new BadRequestException('The password must be at least 8 characters long');
     }
 
+   
+
    const userRepo = this.dataSource.getRepository(User);
    const user = new User();
    user.email = registerDto.email;
@@ -39,5 +42,21 @@ export class AppController {
    await userRepo.save(user);
 
     return user;
+  }
+  @Patch('user/:id')
+  async patchUser(
+    @Param('id') id:number, @Body() changeDto : ChangeDto,
+  ){
+    if (!changeDto.email.includes('@')){
+      throw new BadRequestException('The password must be at least 8 characters long');
+    }
+    if(!changeDto.profilePictureUrl.startsWith('http://') && !changeDto.profilePictureUrl.startsWith('https://')){
+      throw new BadRequestException('Url must start with http:// or https://');
+    } 
+    const userRepo = this.dataSource.getRepository(User);
+    const userChange = await userRepo.findOneBy({id : id});
+    userChange.email = changeDto.email;
+    userChange.profilePictureUrl = changeDto.profilePictureUrl;
+    userRepo.save(userChange);
   }
 }
